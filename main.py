@@ -8,7 +8,6 @@ from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import learning_curve
 
 # Specify the path to the JSON file
-# file_path = "./Arts_Crafts_and_Sewing_5.json"
 file_path = "./AMAZON_FASHION_5.json"
 
 # Load the data from the JSON file
@@ -40,6 +39,7 @@ model.fit(X_train, y_train)
 
 # Make predictions
 y_pred = model.predict(X_test)
+y_pred_rounded = np.round(y_pred)
 
 # Evaluate the model
 mse = mean_squared_error(y_test, y_pred)
@@ -59,9 +59,11 @@ plt.grid()
 plt.plot(train_sizes, train_scores_mean, label="Training Error")
 plt.plot(train_sizes, test_scores_mean, label="Cross-validation Error")
 plt.legend(loc="best")
+
+# Show plot
 plt.show()
 
 # Output predictions
-print("Predictions:")
 for i in range(len(y_test)):
-    print(f"Actual: {y_test[i]}, Predicted: {y_pred[i]}")
+    print(f"Actual: {y_test[i]}, Predicted: {y_pred_rounded[i]}, {y_pred[i]}")
+
