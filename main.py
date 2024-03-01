@@ -60,8 +60,9 @@ plt.plot(train_sizes, train_scores_mean, label="Training Error")
 plt.plot(train_sizes, test_scores_mean, label="Cross-validation Error")
 plt.legend(loc="best")
 
-# Show plot
-plt.show()
+# Save plot as JPEG
+plt.savefig("learning_curve.jpg")
+
 
 # Output predictions
 for i in range(len(y_test)):
