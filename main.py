@@ -7,6 +7,20 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import learning_curve
 
+def plot_graphs(train_sizes, train_scores_mean, test_scores_mean):
+    plt.figure()
+    plt.title("Learning Curve")
+    plt.xlabel("Training Examples")
+    plt.ylabel("Mean Squared Error")
+    plt.grid()
+
+    plt.plot(train_sizes, train_scores_mean, label="Training Error")
+    plt.plot(train_sizes, test_scores_mean, label="Cross-validation Error")
+    plt.legend(loc="best")
+
+    # Save plot as JPEG
+    plt.savefig("learning_curve.jpg")
+
 # Specify the path to the JSON file
 file_path = "./AMAZON_FASHION_5.json"
 
@@ -50,21 +64,8 @@ train_sizes, train_scores, test_scores = learning_curve(model, X_train, y_train,
 train_scores_mean = -np.mean(train_scores, axis=1)
 test_scores_mean = -np.mean(test_scores, axis=1)
 
-plt.figure()
-plt.title("Learning Curve")
-plt.xlabel("Training Examples")
-plt.ylabel("Mean Squared Error")
-plt.grid()
-
-plt.plot(train_sizes, train_scores_mean, label="Training Error")
-plt.plot(train_sizes, test_scores_mean, label="Cross-validation Error")
-plt.legend(loc="best")
-
-# Save plot as JPEG
-plt.savefig("learning_curve.jpg")
-
+plot_graphs(train_sizes, train_scores_mean, test_scores_mean)
 
 # Output predictions
 for i in range(len(y_test)):
     print(f"Actual: {y_test[i]}, Predicted: {y_pred_rounded[i]}, {y_pred[i]}")
-
