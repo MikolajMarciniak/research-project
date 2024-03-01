@@ -7,6 +7,11 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import learning_curve
 
+# Specify the path to the JSON file
+# file_path = "./AMAZON_FASHION_5.json"
+# file_path = "./Arts_Crafts_and_Sewing_5.json"
+file_path = "./Digital_Music_5.json"
+
 def plot_graphs(train_sizes, train_scores_mean, test_scores_mean):
     plt.figure()
     plt.title("Learning Curve")
@@ -20,9 +25,6 @@ def plot_graphs(train_sizes, train_scores_mean, test_scores_mean):
 
     # Save plot as JPEG
     plt.savefig("learning_curve.jpg")
-
-# Specify the path to the JSON file
-file_path = "./AMAZON_FASHION_5.json"
 
 # Load the data from the JSON file
 data = []
@@ -66,6 +68,6 @@ test_scores_mean = -np.mean(test_scores, axis=1)
 
 plot_graphs(train_sizes, train_scores_mean, test_scores_mean)
 
-# Output predictions
-for i in range(len(y_test)):
-    print(f"Actual: {y_test[i]}, Predicted: {y_pred_rounded[i]}, {y_pred[i]}")
+# # Output predictions
+# for i in range(len(y_test)):
+#     print(f"Actual: {y_test[i]}, Predicted: {y_pred_rounded[i]}, {y_pred[i]}")
