@@ -1,73 +1,86 @@
-import json
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error
-from sklearn.model_selection import learning_curve
+from pprint import pprint
+import nltk
+from nltk.sentiment import SentimentIntensityAnalyzer
+from random import shuffle
+from statistics import mean
 
-# Specify the path to the JSON file
-# file_path = "./AMAZON_FASHION_5.json"
-# file_path = "./Arts_Crafts_and_Sewing_5.json"
-file_path = "./Digital_Music_5.json"
+nltk.download([
+     "movie_reviews",
+     "vader_lexicon",
+     "punkt",
+ ])
 
-def plot_graphs(train_sizes, train_scores_mean, test_scores_mean):
-    plt.figure()
-    plt.title("Learning Curve")
-    plt.xlabel("Training Examples")
-    plt.ylabel("Mean Squared Error")
-    plt.grid()
+sia = SentimentIntensityAnalyzer()
 
-    plt.plot(train_sizes, train_scores_mean, label="Training Error")
-    plt.plot(train_sizes, test_scores_mean, label="Cross-validation Error")
-    plt.legend(loc="best")
+def is_positive(review_text: str) -> bool:
+    """True if the average of all sentence compound scores is positive."""
+    scores = [
+        sia.polarity_scores(sentence)["compound"]
+        for sentence in nltk.sent_tokenize(review_text)
+    ]
+    return mean(scores) > 0
 
-    # Save plot as JPEG
-    plt.savefig("learning_curve.jpg")
+positive_reviews = nltk.corpus.movie_reviews.fileids(categories=["pos"])
+negative_reviews = nltk.corpus.movie_reviews.fileids(categories=["neg"])
+all_reviews = positive_reviews + negative_reviews
 
-# Load the data from the JSON file
-data = []
-with open(file_path, "r", encoding="utf-8") as file:
-    for line in file:
-        entry = json.loads(line)
-        if "summary" in entry:
-            data.append(entry)
+shuffle(all_reviews)
+correct = 0
+for review_id in all_reviews:
+    review_text = nltk.corpus.movie_reviews.raw(review_id)
+    if is_positive(review_text):
+        if review_id in positive_reviews:
+            correct += 1
+    else:
+        if review_id in negative_reviews:
+            correct += 1
 
-# Extract text summaries and overall ratings
-summaries = [d["summary"] for d in data]
-ratings = [d["overall"] for d in data]
 
-# Preprocess text data
-# For simplicity, we'll just use the text as is
-processed_summaries = summaries
+unwanted = nltk.corpus.stopwords.words("english")
+unwanted.extend([w.lower() for w in nltk.corpus.names.words()])
 
-# TF-IDF vectorization
-tfidf_vectorizer = TfidfVectorizer()
-X = tfidf_vectorizer.fit_transform(processed_summaries)
+def skip_unwanted(pos_tuple):
+    word, tag = pos_tuple
+    if not word.isalpha() or word in unwanted:
+        return False
+    if tag.startswith("NN"):
+        return False
+    return True
 
-# Split the data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(X, ratings, test_size=0.2, random_state=42)
+positive_words = [word for word, tag in filter(
+    skip_unwanted,
+    nltk.pos_tag(nltk.corpus.movie_reviews.words(categories=["pos"]))
+)]
+negative_words = [word for word, tag in filter(
+    skip_unwanted,
+    nltk.pos_tag(nltk.corpus.movie_reviews.words(categories=["neg"]))
+)]
 
-# Train the model
-model = LinearRegression()
-model.fit(X_train, y_train)
 
-# Make predictions
-y_pred = model.predict(X_test)
-y_pred_rounded = np.round(y_pred)
+positive_fd = nltk.FreqDist(positive_words)
+negative_fd = nltk.FreqDist(negative_words)
 
-# Evaluate the model
-mse = mean_squared_error(y_test, y_pred)
-print("Mean Squared Error:", mse)
+common_set = set(positive_fd).intersection(negative_fd)
 
-# Plot learning curve
-train_sizes, train_scores, test_scores = learning_curve(model, X_train, y_train, cv=5, scoring='neg_mean_squared_error')
-train_scores_mean = -np.mean(train_scores, axis=1)
-test_scores_mean = -np.mean(test_scores, axis=1)
+for word in common_set:
+    del positive_fd[word]
+    del negative_fd[word]
 
-plot_graphs(train_sizes, train_scores_mean, test_scores_mean)
+top_100_positive = {word for word, count in positive_fd.most_common(100)}
+top_100_negative = {word for word, count in negative_fd.most_common(100)}
 
-# # Output predictions
-# for i in range(len(y_test)):
-#     print(f"Actual: {y_test[i]}, Predicted: {y_pred_rounded[i]}, {y_pred[i]}")
+
+unwanted = nltk.corpus.stopwords.words("english")
+unwanted.extend([w.lower() for w in nltk.corpus.names.words()])
+
+positive_bigram_finder = nltk.collocations.BigramCollocationFinder.from_words([
+    w for w in nltk.corpus.movie_reviews.words(categories=["pos"])
+    if w.isalpha() and w not in unwanted
+])
+negative_bigram_finder = nltk.collocations.BigramCollocationFinder.from_words([
+    w for w in nltk.corpus.movie_reviews.words(categories=["neg"])
+    if w.isalpha() and w not in unwanted
+])
+
+
+print(F"{correct / len(all_reviews):.2%} correct")
